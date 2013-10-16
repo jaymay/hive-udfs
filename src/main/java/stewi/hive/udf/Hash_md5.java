@@ -1,18 +1,32 @@
 package stewi.hive.udf;
-
+ 
 import org.apache.hadoop.hive.ql.exec.UDF;
 import org.apache.hadoop.io.Text;
-
-public class Hash extends UDF {
-	public Integer evaluate(Text input) {
-		if(input==null) return null;
-
-		int hash=0;
-
-		for(char c: input.toString().toCharArray()) {
-			hash = 37 * hash + c;
-		}
-		
-		return hash;
+ 
+import java.security.*;
+ 
+/**
+ * Calculate md5 of the string
+ */
+public final class Md5 extends UDF {
+ 
+	public Text evaluate(final Text s) {
+	    if (s == null) {
+                return null;
+	    }
+	    try {
+	    	MessageDigest md = MessageDigest.getInstance("MD5");
+	    	md.update(s.toString().getBytes());
+	    	byte[] md5hash = md.digest();
+	    	StringBuilder builder = new StringBuilder();
+	    	for (byte b : md5hash) {
+	    	    builder.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
+	    	}
+		return new Text(builder.toString());
+	    } catch (NoSuchAlgorithmException nsae) {
+	    	System.out.println("Cannot find digest algorithm");
+                System.exit(1);
+	    }
+	    return null;
 	}
 }
